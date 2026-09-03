@@ -17,7 +17,7 @@ from s3_span_exporter import S3SpanExporter
 SPAN_BUCKET = os.environ.get("SPAN_BUCKET", "agentcore-trace-demo-spans")
 SPAN_PREFIX = os.environ.get("SPAN_PREFIX", "spans")
 MODEL_PROVIDER = os.environ.get("MODEL_PROVIDER", "bedrock")
-MODEL_ID = os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+MODEL_ID = os.environ.get("MODEL_ID", "us.openai.gpt-5.6-luna")
 API_KEY = os.environ.get("MODEL_API_KEY", "")
 API_BASE = os.environ.get("MODEL_API_BASE", "")
 

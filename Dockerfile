@@ -23,7 +23,7 @@ RUN uv pip install aws-opentelemetry-distro==0.12.2
 
 # Model configuration (override at deploy time or via env vars)
 ENV MODEL_PROVIDER=bedrock \
-    MODEL_ID=us.anthropic.claude-haiku-4-5-20251001-v1:0 \
+    MODEL_ID=us.openai.gpt-5.6-luna \
     MODEL_API_KEY="" \
     MODEL_API_BASE=""
 
