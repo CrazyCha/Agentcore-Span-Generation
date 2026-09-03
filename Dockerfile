@@ -21,11 +21,8 @@ RUN uv pip install -r requirements.txt
 
 RUN uv pip install aws-opentelemetry-distro==0.12.2
 
-# Model configuration (override at deploy time or via env vars)
-ENV MODEL_PROVIDER=bedrock \
-    MODEL_ID=us.openai.gpt-5.6-terra \
-    MODEL_API_KEY="" \
-    MODEL_API_BASE=""
+# Model variant: sol (strongest), terra (balanced), luna (lightweight)
+ENV MODEL_VARIANT=terra
 
 # Create non-root user
 RUN useradd -m -u 1000 bedrock_agentcore

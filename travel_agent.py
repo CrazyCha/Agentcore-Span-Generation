@@ -5,6 +5,7 @@ import json
 import random
 
 from strands import Agent, tool
+from strands.models import BedrockModel
 from strands.telemetry import StrandsTelemetry
 from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -16,10 +17,16 @@ from s3_span_exporter import S3SpanExporter
 # ── Configuration ────────────────────────────────────────────────────────────
 SPAN_BUCKET = os.environ.get("SPAN_BUCKET", "agentcore-trace-demo-spans")
 SPAN_PREFIX = os.environ.get("SPAN_PREFIX", "spans")
-MODEL_PROVIDER = os.environ.get("MODEL_PROVIDER", "bedrock")
-MODEL_ID = os.environ.get("MODEL_ID", "us.openai.gpt-5.6-terra")
-API_KEY = os.environ.get("MODEL_API_KEY", "")
-API_BASE = os.environ.get("MODEL_API_BASE", "")
+
+ALLOWED_MODELS = {
+    "sol": "us.openai.gpt-5.6-sol",
+    "terra": "us.openai.gpt-5.6-terra",
+    "luna": "us.openai.gpt-5.6-luna",
+}
+MODEL_VARIANT = os.environ.get("MODEL_VARIANT", "terra").lower()
+MODEL_ID = ALLOWED_MODELS.get(MODEL_VARIANT)
+if not MODEL_ID:
+    raise ValueError(f"MODEL_VARIANT must be one of {list(ALLOWED_MODELS.keys())}, got '{MODEL_VARIANT}'")
 
 # ── OTel setup: add S3SpanExporter to existing or new provider ───────────────
 s3_exporter = S3SpanExporter(bucket_name=SPAN_BUCKET, prefix=SPAN_PREFIX)
@@ -112,31 +119,9 @@ def check_weather(city: str) -> str:
     return json.dumps({"city": city, "weather": random.choice(conditions), "forecast": "next 3 days: similar"})
 
 
-# ── Model factory ───────────────────────────────────────────────────────────
-def _build_model():
-    if MODEL_PROVIDER == "bedrock":
-        from strands.models import BedrockModel
-        return BedrockModel(model_id=MODEL_ID)
-    elif MODEL_PROVIDER == "openai":
-        from strands.models.openai import OpenAIModel
-        kwargs = {"model": MODEL_ID}
-        if API_KEY:
-            import openai
-            kwargs["client"] = openai.OpenAI(api_key=API_KEY, base_url=API_BASE or None)
-        return OpenAIModel(**kwargs)
-    elif MODEL_PROVIDER == "litellm":
-        from strands.models.litellm import LiteLLMModel
-        model_kwargs = {}
-        if API_KEY:
-            model_kwargs["api_key"] = API_KEY
-        if API_BASE:
-            model_kwargs["api_base"] = API_BASE
-        return LiteLLMModel(model_id=MODEL_ID, model_kwargs=model_kwargs)
-    else:
-        raise ValueError(f"Unknown MODEL_PROVIDER: {MODEL_PROVIDER}. Use 'bedrock', 'openai', or 'litellm'.")
-
-model = _build_model()
-print(f"[Model] provider={MODEL_PROVIDER} model_id={MODEL_ID}")
+# ── Model ───────────────────────────────────────────────────────────────────
+model = BedrockModel(model_id=MODEL_ID)
+print(f"[Model] {MODEL_VARIANT} → {MODEL_ID}")
 SYSTEM_PROMPT = (
     "You are a travel assistant. Help users plan trips by searching flights, "
     "hotels, and checking weather. Always search for relevant information before "
