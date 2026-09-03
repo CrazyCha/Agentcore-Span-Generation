@@ -67,6 +67,19 @@ python deploy.py
 - Build and push the container image via CodeBuild (ARM64)
 - Create the AgentCore Runtime agent with S3 write permissions
 - Inject `BEDROCK_API_KEY` and config into the runtime container
+- Save deployment info (including bucket name) to `deploy-output.json`
+
+After deployment, spans are written to:
+
+```
+s3://agentcore-trace-spans-{your_account_id}-{region}/spans/{session_id}/{trace_id}/{timestamp}.json
+```
+
+Check `deploy-output.json` for the exact bucket name, or browse directly:
+
+```bash
+aws s3 ls s3://$(jq -r .span_bucket deploy-output.json)/spans/ --recursive
+```
 
 ### 4. Test with a single invocation
 
