@@ -1,6 +1,7 @@
 """Deploy travel agent to AgentCore Runtime with S3 span export."""
 
 import json
+import os
 import time
 
 import boto3
@@ -13,6 +14,13 @@ account_id = boto3.client("sts").get_caller_identity()["Account"]
 
 AGENT_NAME = "travel_agent_trace_s3"
 SPAN_BUCKET = "agentcore-trace-demo-spans"
+
+BEDROCK_API_KEY = os.environ.get("BEDROCK_API_KEY", "")
+if not BEDROCK_API_KEY:
+    print("ERROR: BEDROCK_API_KEY environment variable is required.")
+    print("  Create one in the Amazon Bedrock console → API keys,")
+    print("  then run: export BEDROCK_API_KEY=ABSK...")
+    exit(1)
 
 # ── 1. Ensure execution role has S3 write permission ─────────────────────────
 iam = boto3.client("iam")
@@ -47,7 +55,12 @@ print(f"Configure result: {response}")
 
 # ── 3. Launch ────────────────────────────────────────────────────────────────
 print("\nLaunching agent to AgentCore Runtime (this takes a few minutes)...")
-launch_result = agentcore_runtime.launch()
+launch_result = agentcore_runtime.launch(env_vars={
+    "BEDROCK_API_KEY": BEDROCK_API_KEY,
+    "MODEL_VARIANT": os.environ.get("MODEL_VARIANT", "terra"),
+    "BEDROCK_REGION": region,
+    "SPAN_BUCKET": SPAN_BUCKET,
+})
 print(f"Agent ARN: {launch_result.agent_arn}")
 print(f"Agent ID: {launch_result.agent_id}")
 print(f"ECR URI: {launch_result.ecr_uri}")
