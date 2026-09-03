@@ -15,7 +15,7 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from s3_span_exporter import S3SpanExporter
 
 # ── Configuration ────────────────────────────────────────────────────────────
-SPAN_BUCKET = os.environ.get("SPAN_BUCKET", "agentcore-trace-demo-spans")
+SPAN_BUCKET = os.environ.get("SPAN_BUCKET", "agentcore-trace-spans")
 SPAN_PREFIX = os.environ.get("SPAN_PREFIX", "spans")
 
 ALLOWED_MODELS = {

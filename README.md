@@ -58,14 +58,15 @@ export BEDROCK_API_KEY=ABSK...your-key-here...
 # export MODEL_VARIANT=sol    # most capable
 # export MODEL_VARIANT=luna   # lightweight / low cost
 
-# Create S3 bucket for span storage
-aws s3 mb s3://agentcore-trace-demo-spans --region us-east-1
-
 # Deploy to AgentCore Runtime (~2 minutes)
 python deploy.py
 ```
 
-`deploy.py` will automatically inject `BEDROCK_API_KEY` and other config into the runtime container.
+`deploy.py` will automatically:
+- Create an S3 bucket for span storage (`agentcore-trace-spans-{account_id}-{region}`)
+- Build and push the container image via CodeBuild (ARM64)
+- Create the AgentCore Runtime agent with S3 write permissions
+- Inject `BEDROCK_API_KEY` and config into the runtime container
 
 ### 4. Test with a single invocation
 
@@ -163,7 +164,7 @@ Spans are partitioned in S3 as: `spans/{session_id}/{trace_id}/{timestamp}-{uuid
 | `BEDROCK_API_KEY` | Bedrock API key (created in console) | **Yes** | — |
 | `MODEL_VARIANT` | GPT-5.6 variant: `sol`, `terra`, or `luna` | No | `terra` |
 | `BEDROCK_REGION` | AWS region for Bedrock endpoint | No | `us-east-1` |
-| `SPAN_BUCKET` | S3 bucket for span export | No | `agentcore-trace-demo-spans` |
+| `SPAN_BUCKET` | S3 bucket for span export | No | `agentcore-trace-spans-{account_id}-{region}` |
 | `SPAN_PREFIX` | S3 key prefix | No | `spans` |
 
 ### Model Variants

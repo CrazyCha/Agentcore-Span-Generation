@@ -13,7 +13,7 @@ region = boto_session.region_name
 account_id = boto3.client("sts").get_caller_identity()["Account"]
 
 AGENT_NAME = "travel_agent_trace_s3"
-SPAN_BUCKET = "agentcore-trace-demo-spans"
+SPAN_BUCKET = os.environ.get("SPAN_BUCKET", f"agentcore-trace-spans-{account_id}-{region}")
 
 BEDROCK_API_KEY = os.environ.get("BEDROCK_API_KEY", "")
 if not BEDROCK_API_KEY:
@@ -22,7 +22,20 @@ if not BEDROCK_API_KEY:
     print("  then run: export BEDROCK_API_KEY=ABSK...")
     exit(1)
 
-# ── 1. Ensure execution role has S3 write permission ─────────────────────────
+# ── 1. Ensure S3 bucket exists ───────────────────────────────────────────────
+s3 = boto3.client("s3", region_name=region)
+try:
+    s3.head_bucket(Bucket=SPAN_BUCKET)
+    print(f"S3 bucket exists: {SPAN_BUCKET}")
+except Exception:
+    print(f"Creating S3 bucket: {SPAN_BUCKET}")
+    create_args = {"Bucket": SPAN_BUCKET}
+    if region and region != "us-east-1":
+        create_args["CreateBucketConfiguration"] = {"LocationConstraint": region}
+    s3.create_bucket(**create_args)
+    print(f"  Created: s3://{SPAN_BUCKET}")
+
+# ── 2. Ensure execution role has S3 write permission ─────────────────────────
 iam = boto3.client("iam")
 role_name = f"{AGENT_NAME}-execution-role"
 s3_policy_name = f"{AGENT_NAME}-s3-span-write"
