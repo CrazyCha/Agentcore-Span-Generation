@@ -31,9 +31,48 @@ User ── invoke ──────▶│                                     
 ## Prerequisites
 
 - AWS account with Bedrock AgentCore access (us-east-1)
-- Bedrock model access for Claude Haiku (`us.anthropic.claude-haiku-4-5-20251001-v1:0`)
+- **Bedrock model access enabled** for GPT-5.6 Terra (see [Model Access Setup](#model-access-setup) below)
 - Python 3.10+
 - AWS credentials configured (`aws configure` or IAM role)
+
+### Model Access Setup
+
+The demo defaults to **OpenAI GPT-5.6 Terra** via Bedrock cross-region inference. Before deploying, you need to enable model access:
+
+1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess)
+2. Go to **Model access** in the left navigation
+3. Click **Modify model access**
+4. Find **OpenAI → GPT-5.6 Terra** and check the box to enable it
+5. Click **Save changes** (approval is typically instant)
+
+To verify access is working:
+
+```bash
+aws bedrock-runtime converse \
+  --model-id us.openai.gpt-5.6-terra \
+  --messages '[{"role":"user","content":[{"text":"Hello"}]}]' \
+  --region us-east-1
+```
+
+Also ensure the **AgentCore Runtime execution role** has permission to invoke the model. The `deploy.py` script creates a role automatically, but you may need to attach this policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-terra"
+    }
+  ]
+}
+```
+
+> **Other models:** You can switch to any Bedrock model (e.g. `us.amazon.nova-lite-v1:0`) or external provider — see [Configuration](#configuration).
 
 ## Quick Start
 
@@ -142,7 +181,7 @@ Each span file is a JSON array of span objects:
     "duration_ms": 2500.0,
     "status": { "code": "OK", "description": null },
     "attributes": {
-      "gen_ai.request.model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "gen_ai.request.model": "us.openai.gpt-5.6-terra",
       "gen_ai.usage.total_tokens": 342,
       "session.id": "user-1-abc123..."
     },
@@ -162,7 +201,7 @@ The demo supports multiple model providers via environment variables. Set these 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
 | `MODEL_PROVIDER` | `bedrock`, `openai`, or `litellm` | `bedrock` |
-| `MODEL_ID` | Model ID for the chosen provider | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
+| `MODEL_ID` | Model ID for the chosen provider | `us.openai.gpt-5.6-terra` |
 | `MODEL_API_KEY` | API key (required for `openai` / `litellm`) | _(empty)_ |
 | `MODEL_API_BASE` | Custom API base URL (optional) | _(empty)_ |
 
