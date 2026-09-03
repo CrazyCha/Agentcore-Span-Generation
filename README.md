@@ -37,12 +37,12 @@ User ── invoke ──────▶│                                     
 
 ### Model Access Setup
 
-The demo defaults to **OpenAI GPT-5.6 Terra** via Bedrock cross-region inference. Before deploying, you need to enable model access:
+The demo uses **OpenAI GPT-5.6** models (Sol / Terra / Luna) via Bedrock cross-region inference. Before deploying, enable model access:
 
 1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess)
 2. Go to **Model access** in the left navigation
 3. Click **Modify model access**
-4. Find **OpenAI → GPT-5.6 Terra** and check the box to enable it
+4. Find **OpenAI** section and enable **GPT-5.6 Sol**, **GPT-5.6 Terra**, **GPT-5.6 Luna** (or at least the variant you plan to use — default is Terra)
 5. Click **Save changes** (approval is typically instant)
 
 To verify access is working:
@@ -54,7 +54,7 @@ aws bedrock-runtime converse \
   --region us-east-1
 ```
 
-Also ensure the **AgentCore Runtime execution role** has permission to invoke the model. The `deploy.py` script creates a role automatically, but you may need to attach this policy:
+Also ensure the **AgentCore Runtime execution role** has permission to invoke the models. The `deploy.py` script creates a role automatically, but you may need to attach this policy:
 
 ```json
 {
@@ -66,13 +66,15 @@ Also ensure the **AgentCore Runtime execution role** has permission to invoke th
         "bedrock:InvokeModel",
         "bedrock:InvokeModelWithResponseStream"
       ],
-      "Resource": "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-terra"
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-sol",
+        "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-terra",
+        "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-luna"
+      ]
     }
   ]
 }
 ```
-
-> **Other models:** You can switch to any Bedrock model (e.g. `us.amazon.nova-lite-v1:0`) or external provider — see [Configuration](#configuration).
 
 ## Quick Start
 
