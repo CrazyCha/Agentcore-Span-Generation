@@ -21,8 +21,10 @@ RUN uv pip install -r requirements.txt
 
 RUN uv pip install aws-opentelemetry-distro==0.12.2
 
-# Model variant: sol (strongest), terra (balanced), luna (lightweight)
-ENV MODEL_VARIANT=terra
+# Model configuration
+ENV MODEL_VARIANT=terra \
+    BEDROCK_API_KEY="" \
+    BEDROCK_REGION=us-east-1
 
 # Create non-root user
 RUN useradd -m -u 1000 bedrock_agentcore

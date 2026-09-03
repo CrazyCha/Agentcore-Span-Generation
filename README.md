@@ -37,7 +37,9 @@ User ── invoke ──────▶│                                     
 
 ### Model Access Setup
 
-The demo uses **OpenAI GPT-5.6** models (Sol / Terra / Luna) via Bedrock cross-region inference. Before deploying, enable model access:
+The demo uses **OpenAI GPT-5.6** models (Sol / Terra / Luna) via Bedrock's OpenAI-compatible endpoint with API key authentication.
+
+**Step 1: Enable model access**
 
 1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess)
 2. Go to **Model access** in the left navigation
@@ -45,35 +47,27 @@ The demo uses **OpenAI GPT-5.6** models (Sol / Terra / Luna) via Bedrock cross-r
 4. Find **OpenAI** section and enable **GPT-5.6 Sol**, **GPT-5.6 Terra**, **GPT-5.6 Luna** (or at least the variant you plan to use — default is Terra)
 5. Click **Save changes** (approval is typically instant)
 
-To verify access is working:
+**Step 2: Create an API key**
+
+1. In the Bedrock console, go to **API keys** in the left navigation
+2. Click **Create API key**
+3. Copy the generated key (it will only be shown once)
+
+**Step 3: Set environment variables**
 
 ```bash
-aws bedrock-runtime converse \
-  --model-id us.openai.gpt-5.6-terra \
-  --messages '[{"role":"user","content":[{"text":"Hello"}]}]' \
-  --region us-east-1
+export BEDROCK_API_KEY=br-xxxxxxxxxxxxxxxxxxxxxxxx   # your API key from Step 2
+export MODEL_VARIANT=terra                            # sol, terra, or luna
+export BEDROCK_REGION=us-east-1                       # region where model access is enabled
 ```
 
-Also ensure the **AgentCore Runtime execution role** has permission to invoke the models. The `deploy.py` script creates a role automatically, but you may need to attach this policy:
+**Verify access:**
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock:InvokeModel",
-        "bedrock:InvokeModelWithResponseStream"
-      ],
-      "Resource": [
-        "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-sol",
-        "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-terra",
-        "arn:aws:bedrock:*::foundation-model/openai.gpt-5.6-luna"
-      ]
-    }
-  ]
-}
+```bash
+curl -s "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1/chat/completions" \
+  -H "Authorization: Bearer $BEDROCK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"us.openai.gpt-5.6-terra","messages":[{"role":"user","content":"Hello"}]}'
 ```
 
 ## Quick Start
@@ -196,21 +190,23 @@ Spans are partitioned in S3 as: `spans/{session_id}/{trace_id}/{timestamp}-{uuid
 
 ## Configuration
 
-| Environment Variable | Description | Default |
-|---------------------|-------------|---------|
-| `MODEL_VARIANT` | GPT-5.6 variant: `sol`, `terra`, or `luna` | `terra` |
-| `SPAN_BUCKET` | S3 bucket for span export | `agentcore-trace-demo-spans` |
-| `SPAN_PREFIX` | S3 key prefix | `spans` |
+| Environment Variable | Description | Required | Default |
+|---------------------|-------------|----------|---------|
+| `BEDROCK_API_KEY` | Bedrock API key (created in console) | **Yes** | — |
+| `MODEL_VARIANT` | GPT-5.6 variant: `sol`, `terra`, or `luna` | No | `terra` |
+| `BEDROCK_REGION` | AWS region for Bedrock endpoint | No | `us-east-1` |
+| `SPAN_BUCKET` | S3 bucket for span export | No | `agentcore-trace-demo-spans` |
+| `SPAN_PREFIX` | S3 key prefix | No | `spans` |
 
 ### Model Variants
 
-| Variant | Inference Profile ID | Positioning |
-|---------|---------------------|-------------|
+| Variant | Model ID | Positioning |
+|---------|----------|-------------|
 | **sol** | `us.openai.gpt-5.6-sol` | Most capable |
 | **terra** | `us.openai.gpt-5.6-terra` | Balanced (default) |
 | **luna** | `us.openai.gpt-5.6-luna` | Lightweight / low cost |
 
-To switch variant, set the environment variable before deploying:
+To switch variant:
 
 ```bash
 export MODEL_VARIANT=luna   # or sol, terra

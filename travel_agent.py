@@ -5,7 +5,7 @@ import json
 import random
 
 from strands import Agent, tool
-from strands.models import BedrockModel
+from strands.models.openai import OpenAIModel
 from strands.telemetry import StrandsTelemetry
 from opentelemetry.sdk.trace import TracerProvider as SDKTracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -27,6 +27,13 @@ MODEL_VARIANT = os.environ.get("MODEL_VARIANT", "terra").lower()
 MODEL_ID = ALLOWED_MODELS.get(MODEL_VARIANT)
 if not MODEL_ID:
     raise ValueError(f"MODEL_VARIANT must be one of {list(ALLOWED_MODELS.keys())}, got '{MODEL_VARIANT}'")
+
+BEDROCK_API_KEY = os.environ.get("BEDROCK_API_KEY", "")
+BEDROCK_REGION = os.environ.get("BEDROCK_REGION", os.environ.get("AWS_REGION", "us-east-1"))
+BEDROCK_ENDPOINT = f"https://bedrock-runtime.{BEDROCK_REGION}.amazonaws.com/openai/v1"
+
+if not BEDROCK_API_KEY:
+    raise ValueError("BEDROCK_API_KEY is required. Create one in the Amazon Bedrock console → API keys.")
 
 # ── OTel setup: add S3SpanExporter to existing or new provider ───────────────
 s3_exporter = S3SpanExporter(bucket_name=SPAN_BUCKET, prefix=SPAN_PREFIX)
@@ -120,8 +127,11 @@ def check_weather(city: str) -> str:
 
 
 # ── Model ───────────────────────────────────────────────────────────────────
-model = BedrockModel(model_id=MODEL_ID)
-print(f"[Model] {MODEL_VARIANT} → {MODEL_ID}")
+import openai
+
+openai_client = openai.OpenAI(api_key=BEDROCK_API_KEY, base_url=BEDROCK_ENDPOINT)
+model = OpenAIModel(client=openai_client, model=MODEL_ID)
+print(f"[Model] {MODEL_VARIANT} → {MODEL_ID} via {BEDROCK_ENDPOINT}")
 SYSTEM_PROMPT = (
     "You are a travel assistant. Help users plan trips by searching flights, "
     "hotels, and checking weather. Always search for relevant information before "
