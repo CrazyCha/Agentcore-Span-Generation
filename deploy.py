@@ -96,14 +96,9 @@ if status != "READY":
 # ── 5. Attach S3 write policy to the execution role ─────────────────────────
 print(f"\nAttaching S3 span write policy to execution role...")
 try:
-    actual_role_name = launch_result.agent_arn.split("/")[-1] if hasattr(launch_result, "role_name") else role_name
-    # List roles to find the auto-created one
-    roles = iam.list_roles(PathPrefix="/")["Roles"]
-    runtime_role = None
-    for r in roles:
-        if AGENT_NAME.replace("_", "-") in r["RoleName"] or AGENT_NAME in r["RoleName"]:
-            runtime_role = r["RoleName"]
-            break
+    status_resp = agentcore_runtime.status()
+    role_arn = status_resp.agent.get("roleArn", "")
+    runtime_role = role_arn.split("/")[-1] if role_arn else ""
 
     if runtime_role:
         iam.put_role_policy(
