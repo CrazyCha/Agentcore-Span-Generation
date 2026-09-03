@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.bedrock_agentcore.yaml
+deploy-output.json
+.dockerignore
+*.egg-info/
+dist/
+build/
+.env
