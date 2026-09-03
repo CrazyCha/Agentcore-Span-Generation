@@ -127,10 +127,11 @@ def check_weather(city: str) -> str:
 
 
 # ── Model ───────────────────────────────────────────────────────────────────
-import openai
-
-openai_client = openai.OpenAI(api_key=BEDROCK_API_KEY, base_url=BEDROCK_ENDPOINT)
-model = OpenAIModel(client=openai_client, model=MODEL_ID)
+model = OpenAIModel(
+    client_args={"api_key": BEDROCK_API_KEY, "base_url": BEDROCK_ENDPOINT},
+    model_id=MODEL_ID,
+    params={"reasoning_effort": "none"},
+)
 print(f"[Model] {MODEL_VARIANT} → {MODEL_ID} via {BEDROCK_ENDPOINT}")
 SYSTEM_PROMPT = (
     "You are a travel assistant. Help users plan trips by searching flights, "
