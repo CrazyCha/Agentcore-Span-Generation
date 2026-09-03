@@ -7,7 +7,7 @@ import random
 
 import boto3
 from strands import Agent, tool
-from strands.models import BedrockModel
+from strands.models.openai import OpenAIModel
 from strands.telemetry import StrandsTelemetry
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -16,10 +16,26 @@ import opentelemetry.trace as trace_api
 from s3_span_exporter import S3SpanExporter
 
 # ── Config ───────────────────────────────────────────────────────────────────
-SPAN_BUCKET = os.environ.get("SPAN_BUCKET", "agentcore-trace-demo-spans")
+SPAN_BUCKET = os.environ.get("SPAN_BUCKET", "agentcore-trace-spans")
 SPAN_PREFIX = os.environ.get("SPAN_PREFIX", "spans")
-MODEL_ID = os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
-REGION = boto3.Session().region_name
+REGION = boto3.Session().region_name or "us-east-1"
+
+ALLOWED_MODELS = {
+    "sol": "us.openai.gpt-5.6-sol",
+    "terra": "us.openai.gpt-5.6-terra",
+    "luna": "us.openai.gpt-5.6-luna",
+}
+MODEL_VARIANT = os.environ.get("MODEL_VARIANT", "terra").lower()
+MODEL_ID = ALLOWED_MODELS.get(MODEL_VARIANT)
+if not MODEL_ID:
+    raise ValueError(f"MODEL_VARIANT must be one of {list(ALLOWED_MODELS.keys())}, got '{MODEL_VARIANT}'")
+
+BEDROCK_API_KEY = os.environ.get("BEDROCK_API_KEY", "")
+BEDROCK_REGION = os.environ.get("BEDROCK_REGION", REGION)
+BEDROCK_ENDPOINT = f"https://bedrock-runtime.{BEDROCK_REGION}.amazonaws.com/openai/v1"
+
+if not BEDROCK_API_KEY:
+    raise ValueError("BEDROCK_API_KEY is required. export BEDROCK_API_KEY=ABSK...")
 
 # ── OTel → S3 ────────────────────────────────────────────────────────────────
 s3_exporter = S3SpanExporter(bucket_name=SPAN_BUCKET, prefix=SPAN_PREFIX, region=REGION)
@@ -102,7 +118,11 @@ def check_weather(city: str) -> str:
 
 
 # ── Agent ────────────────────────────────────────────────────────────────────
-model = BedrockModel(model_id=MODEL_ID)
+model = OpenAIModel(
+    client_args={"api_key": BEDROCK_API_KEY, "base_url": BEDROCK_ENDPOINT},
+    model_id=MODEL_ID,
+    params={"reasoning_effort": "none"},
+)
 agent = Agent(
     model=model,
     tools=[search_flights, search_hotels, check_weather],
