@@ -21,9 +21,11 @@ RUN uv pip install -r requirements.txt
 
 RUN uv pip install aws-opentelemetry-distro==0.12.2
 
-
-# Signal that this is running in Docker for host binding logic
-ENV DOCKER_CONTAINER=1
+# Model configuration (override at deploy time or via env vars)
+ENV MODEL_PROVIDER=bedrock \
+    MODEL_ID=us.anthropic.claude-haiku-4-5-20251001-v1:0 \
+    MODEL_API_KEY="" \
+    MODEL_API_BASE=""
 
 # Create non-root user
 RUN useradd -m -u 1000 bedrock_agentcore

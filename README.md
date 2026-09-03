@@ -155,8 +155,44 @@ Spans are partitioned in S3 as: `spans/{session_id}/{trace_id}/{timestamp}-{uuid
 
 ## Configuration
 
+### Model Provider
+
+The demo supports multiple model providers via environment variables. Set these before running `deploy.py`, or pass them in the Dockerfile / container config.
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `MODEL_PROVIDER` | `bedrock`, `openai`, or `litellm` | `bedrock` |
+| `MODEL_ID` | Model ID for the chosen provider | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
+| `MODEL_API_KEY` | API key (required for `openai` / `litellm`) | _(empty)_ |
+| `MODEL_API_BASE` | Custom API base URL (optional) | _(empty)_ |
+
+**Examples:**
+
+```bash
+# Amazon Bedrock (default, uses IAM role — no API key needed)
+export MODEL_PROVIDER=bedrock
+export MODEL_ID=us.amazon.nova-lite-v1:0
+
+# OpenAI
+export MODEL_PROVIDER=openai
+export MODEL_ID=gpt-4o-mini
+export MODEL_API_KEY=sk-...
+
+# OpenAI-compatible endpoint (vLLM, Together, Deepseek, etc.)
+export MODEL_PROVIDER=openai
+export MODEL_ID=deepseek-chat
+export MODEL_API_KEY=sk-...
+export MODEL_API_BASE=https://api.deepseek.com/v1
+
+# LiteLLM (supports 100+ providers with a unified interface)
+export MODEL_PROVIDER=litellm
+export MODEL_ID=anthropic/claude-haiku-4-5-20251001
+export MODEL_API_KEY=sk-ant-...
+```
+
+### S3 Span Export
+
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
 | `SPAN_BUCKET` | S3 bucket for span export | `agentcore-trace-demo-spans` |
 | `SPAN_PREFIX` | S3 key prefix | `spans` |
-| `MODEL_ID` | Bedrock model inference profile ID | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
