@@ -36,20 +36,11 @@ User ── invoke ──────▶│                                     
 
 ## Quick Start
 
-### Step 1: Enable GPT-5.6 model access
+### Step 1: Generate a Bedrock Mantle Endpoint API key
 
-1. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess)
-2. Go to **Model access** → **Modify model access**
-3. Enable **OpenAI → GPT-5.6 Terra** (or Sol / Luna if you prefer a different variant)
-4. Click **Save changes**
+In the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/home?region=us-east-1), generate a **Bedrock Mantle Endpoint API key** for your account.
 
-### Step 2: Create a Bedrock API key
-
-1. In the Bedrock console, go to **API keys**
-2. Click **Create API key**
-3. Copy the generated key (it will only be shown once)
-
-### Step 3: Configure and deploy
+### Step 2: Configure and deploy
 
 ```bash
 # Clone the repo
